@@ -1,0 +1,13 @@
+* {
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10 and IE 11 */
+    user-select: none; /* Standard syntax */
+}
+
+:root {
+    --bs-body-bg: var(--bs-gray-100);
+}
+
+canvas {
+    background: repeating-conic-gradient(#CCC 0% 25%, transparent 0% 50%) 50% / 20px 20px
+}

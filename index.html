@@ -1,185 +1,51 @@
 <!doctype html>
-<style>
-    label {
-        display: block;
-        font:
-            1rem 'Fira Sans',
-            sans-serif;
-    }
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CA2Minimap</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body data-bs-theme="dark">
+    <h1>Extract CaptureAge minimaps</h1>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col">
+                <h2>Settings</h2>
+                <label for="screenshot">Choose a screenshot</label>
+                <div class="input-group mb-2">
+                    <input class="form-control" type="file" id="screenshot" name="screenshot" accept="image/png" />
+                </div>
+                <div class="input-group mb-2">
+                    <div class="input-group-text">
+                      <input class="form-check-input mt-0" type="checkbox" id="centered" checked aria-label="Centered minimap">
+                    </div>
+                    <label class="form-control" for="centered">Minimap is in the center</label>
+                </div>
+                <div class="input-group mb-2">
+                    <div class="input-group-text">
+                      <input class="form-check-input mt-0" type="checkbox" id="squared" checked aria-label="Squared output">
+                    </div>
+                    <label class="form-control" for="squared">Square output</label>
+                </div>
+            </div>
+            <div class="col">
+                <h2>Input preview</h2>
+                <img id="preview" src="" height="400" alt="Input preview" />
+            </div>
+            <div class="col">
+                <h2>Output</h2>
+                <canvas id="output" alt="Output preview"></canvas>
+                <div class="input-group">
+                    <button class="btn btn-secondary" id="export">Download minimap</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    input,
-    label {
-        margin: 0.4rem 0;
-    }
-
-    .default {
-        display: unset;
-    }
-
-    * {
-        -webkit-user-select: none; /* Safari */
-        -ms-user-select: none; /* IE 10 and IE 11 */
-        user-select: none; /* Standard syntax */
-    }
-
-    canvas {
-        background: repeating-conic-gradient(#CCC 0% 25%, transparent 0% 50%) 50% / 20px 20px
-    }
-</style>
-<html>
-    <head>
-        <meta charset="UTF-8"/>
-        <title>CA2Minimap</title>
-    </head>
-<body>
-    <label for="screenshot">Choose a screenshot (Make sure you fully zoomed out in CaptureAge!)</label>
-    <input type="file" id="screenshot" name="screenshot" accept="image/png" />
-    <br>
-
-    <input type="checkbox" checked id="centered" name="Centered minimap"/>
-    <label class="default" for="centered">Minimap is in the center</label>
-    <br>
-
-    <input type="checkbox" id="squared" name="Squared"/>
-    <label class="default" for="squared">Square output (compatible with aoe2cm.net)</label>
-
-    <label for="preview">Input</label>
-    <img id="preview" src="" height="400" alt="Input preview" />
-
-    <label for="output">Preview of Output</label>
-    <canvas id="output" alt="Output preview"></canvas>
-
-    <label for="export">Download image</label>
-    <button id="export">Download</button>
-</body>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
+    <script src="main.js"></script>
+  </body>
 </html>
 
-<script>
-    const canvas = document.querySelector("#output");
-    const preview = document.querySelector("#preview");
-
-    const fileInput = document.querySelector("#screenshot");
-    const centeredInput = document.querySelector("#centered");
-    const squaredInput = document.querySelector("#squared");
-
-    function drawClipMap(ctx, width, height) {
-        ctx.beginPath();
-
-        const offset = 0
-        let left, right, top, bottom;
-
-        if (height % 2) {
-            left = [[1, Math.floor(height / 2)]]
-            right = [[width - 2, Math.floor(height / 2)]]
-        } else {
-            left = [
-                [offset, height / 2],
-                [offset, height / 2 - 1]
-            ]
-            right = [
-                [width - 4, height / 2 - 1],
-                [width - 4, height / 2]
-            ]
-        }
-
-        if (width % 2) {
-            top = [[Math.floor(width / 2), offset]]
-            bottom = [[Math.floor(width / 2), height - 1 - offset]]
-        } else {
-            top = [
-                [width / 2 - 2, offset],
-                [width / 2 - 2, offset]
-            ]
-            bottom = [
-                [width / 2, height - 1],
-                [width / 2 - 1, height - 1]
-            ]
-        }
-
-        [...left].forEach(element => {
-            ctx.moveTo(...element)
-        });
-
-        [...top, ...right, ...bottom, ...left].forEach(element => {
-            ctx.lineTo(...element)
-        });
-        ctx.clip();
-    }
-
-    function drawImage(ctx, img) {
-        const center = centeredInput.checked
-        const squared = squaredInput.checked
-
-        var height = 0.215*img.height
-        var width = Math.floor(2*height)
-        height = Math.floor(height)
-
-        var left
-        if (center) {
-            left = Math.floor(img.width/2 - width/2)
-        } else {
-            left = img.width - width
-        } 
-
-        left += 2
-
-        canvas.height = height - 1;
-        canvas.width = squared ? height - 3 : width - 4;
-
-        drawClipMap(ctx, squared ? height : width, height);
-
-        ctx.drawImage(img,
-            left, // source x
-            img.height - height, // source y 
-            width, // source width
-            height, // source heigth
-            0, 0, // target x, y
-            squared ? height : width, // target width
-            height // target height
-        );
-    } 
-
-    
-    function processFile() {
-        const reader = new FileReader();
-        const img = new Image();
-
-        const ctx = canvas.getContext("2d");
-        ctx.globalAlpha = 0.0;
-        
-        img.addEventListener("load",
-            () => drawImage(ctx, img)
-        );
-        reader.addEventListener(
-            "load",
-            () => {
-                // convert image file to base64 string
-                preview.src = reader.result;
-                img.src = reader.result;
-            },
-            false,
-        );
-
-        const file = fileInput.files[0]
-        if (file) {
-            reader.readAsDataURL(file);
-        }
-    }
-
-    function exportImage() {
-        const file = fileInput.files[0]
-        const imgUrl = canvas.toDataURL('image/png');
-        const link = document.createElement('a');
-        link.href = imgUrl;
-        link.download = file.name.substr(0, file.name.lastIndexOf('.')) + '_minimap.png' 
-        link.click();
-    }
-
-    const exportButton = document.querySelector("#export");
-    exportButton.addEventListener("click", exportImage);
-    fileInput.addEventListener("change", processFile);
-    centeredInput.addEventListener("click", processFile);
-    squaredInput.addEventListener("click", processFile);
-
-    processFile();
-</script>
